@@ -21,3 +21,8 @@ output "subnet_management_id" {
   description = "Management subnet ID"
   value       = azurerm_subnet.management.id
 }
+
+output "nsg_management_id" {
+  description = "Management subnet NSG ID"
+  value       = azurerm_network_security_group.management.id
+}
