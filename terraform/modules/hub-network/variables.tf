@@ -58,3 +58,17 @@ variable "nsg_rules" {
   }))
   default = []
 }
+variable "subnet_bastion" {
+  description = "AzureBastionSubnet CIDR — /26 minimum required by Azure"
+  type        = string
+}
+
+variable "subnet_pe" {
+  description = "Private endpoints subnet CIDR"
+  type        = string
+}
+
+variable "subnet_dns" {
+  description = "DNS Private Resolver subnet CIDR"
+  type        = string
+}

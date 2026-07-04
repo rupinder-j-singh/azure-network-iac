@@ -12,6 +12,9 @@ module "hub_ukw" {
   resource_group_name = "rg-${var.entity}-hub-ukw-${var.environment}-001"
   vnet_address_space  = "10.204.0.0/20"
   subnet_management   = "10.204.15.0/24"
+  subnet_bastion      = "10.204.14.0/24"
+  subnet_pe           = "10.204.11.0/24"
+  subnet_dns          = "10.204.10.0/24"
   tags                = var.tags
 
   nsg_rules = [

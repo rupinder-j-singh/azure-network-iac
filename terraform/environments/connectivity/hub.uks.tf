@@ -10,8 +10,11 @@ module "hub_uks" {
   location_code       = "uks"
   environment         = var.environment
   resource_group_name = "rg-${var.entity}-hub-uks-${var.environment}-001"
-  vnet_address_space = "10.202.0.0/20"
-  subnet_management  = "10.202.15.0/24"
+  vnet_address_space  = "10.202.0.0/20"
+  subnet_management   = "10.202.15.0/24"
+  subnet_bastion      = "10.202.14.0/24"
+  subnet_pe           = "10.202.11.0/24"
+  subnet_dns          = "10.202.10.0/24"
   tags                = var.tags
 
   nsg_rules = [

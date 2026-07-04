@@ -50,3 +50,34 @@ resource "azurerm_subnet_network_security_group_association" "management" {
   subnet_id                 = azurerm_subnet.management.id
   network_security_group_id = azurerm_network_security_group.management.id
 }
+# ── Bastion Subnet ────────────────────────────────────────────
+resource "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = azurerm_resource_group.hub.name
+  virtual_network_name = azurerm_virtual_network.hub.name
+  address_prefixes     = [var.subnet_bastion]
+}
+
+# ── Private Endpoints Subnet ──────────────────────────────────
+resource "azurerm_subnet" "private_endpoints" {
+  name                 = "snet-${var.entity}-pe-${var.location_code}-${var.environment}-001"
+  resource_group_name  = azurerm_resource_group.hub.name
+  virtual_network_name = azurerm_virtual_network.hub.name
+  address_prefixes     = [var.subnet_pe]
+}
+
+# ── DNS Resolver Subnet ───────────────────────────────────────
+resource "azurerm_subnet" "dns_resolver" {
+  name                 = "snet-${var.entity}-dns-${var.location_code}-${var.environment}-001"
+  resource_group_name  = azurerm_resource_group.hub.name
+  virtual_network_name = azurerm_virtual_network.hub.name
+  address_prefixes     = [var.subnet_dns]
+
+  delegation {
+    name = "dns-resolver-delegation"
+    service_delegation {
+      name    = "Microsoft.Network/dnsResolvers"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
+}
