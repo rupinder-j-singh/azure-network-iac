@@ -26,3 +26,17 @@ output "nsg_management_id" {
   description = "Management subnet NSG ID"
   value       = azurerm_network_security_group.management.id
 }
+output "subnet_bastion_id" {
+  description = "AzureBastionSubnet ID"
+  value       = azurerm_subnet.bastion.id
+}
+
+output "subnet_pe_id" {
+  description = "Private endpoints subnet ID"
+  value       = azurerm_subnet.private_endpoints.id
+}
+
+output "subnet_dns_id" {
+  description = "DNS resolver subnet ID"
+  value       = azurerm_subnet.dns_resolver.id
+}
