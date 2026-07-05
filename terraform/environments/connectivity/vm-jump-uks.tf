@@ -37,8 +37,15 @@ resource "azurerm_key_vault" "platform" {
   tags = var.tags
 }
 
-# RBAC — pipeline SP and your user can manage secrets
-resource "azurerm_role_assignment" "kv_admin" {
+# RBAC — pipeline SP can manage secrets
+resource "azurerm_role_assignment" "kv_admin_sp" {
+  scope                = azurerm_key_vault.platform.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = var.pipeline_sp_object_id
+}
+
+# RBAC — your user can manage secrets locally
+resource "azurerm_role_assignment" "kv_admin_user" {
   scope                = azurerm_key_vault.platform.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
@@ -50,7 +57,10 @@ resource "azurerm_key_vault_secret" "vm_password" {
   value        = random_password.jump_uks.result
   key_vault_id = azurerm_key_vault.platform.id
 
-  depends_on = [azurerm_role_assignment.kv_admin]
+  depends_on = [
+    azurerm_role_assignment.kv_admin_sp,
+    azurerm_role_assignment.kv_admin_user
+  ]
 }
 
 # ── Network Interface ─────────────────────────────────────────
@@ -97,9 +107,9 @@ resource "azurerm_windows_virtual_machine" "jump_uks" {
     version   = "latest"
   }
 
-  boot_diagnostics {
-    storage_account_uri = "https://strsrsdiaguksp01.blob.core.windows.net"
-  }
+ boot_diagnostics {
+  storage_account_uri = azurerm_storage_account.diagnostics.primary_blob_endpoint
+}
 
   tags = var.tags
 }
