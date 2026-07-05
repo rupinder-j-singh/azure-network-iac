@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 
   backend "azurerm" {
@@ -23,5 +27,12 @@ terraform {
 provider "azurerm" {
   features {}
   subscription_id                 = var.subscription_id
+  resource_provider_registrations = "none"
+}
+
+provider "azurerm" {
+  alias                           = "management"
+  features {}
+  subscription_id                 = var.management_subscription_id
   resource_provider_registrations = "none"
 }
