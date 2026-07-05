@@ -77,6 +77,8 @@ resource "azurerm_windows_virtual_machine" "jump_uks" {
   admin_username        = "localadm"
   admin_password        = random_password.jump_uks.result
   network_interface_ids = [azurerm_network_interface.jump_uks.id]
+  patch_mode    = "AutomaticByPlatform"
+  hotpatching_enabled = true
 
   identity {
     type = "SystemAssigned"
