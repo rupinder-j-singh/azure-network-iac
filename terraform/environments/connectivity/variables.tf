@@ -29,9 +29,3 @@ variable "management_subscription_id" {
   type        = string
   default     = "f3c0dff2-e481-44f1-9581-8047d8148dc4"
 }
-
-variable "vm_admin_password" {
-  description = "Admin password for jump server VM"
-  type        = string
-  sensitive   = true
-}

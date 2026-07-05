@@ -12,6 +12,17 @@ data "azurerm_monitor_data_collection_rule" "windows" {
   provider            = azurerm.management
 }
 
+# ── Random password — unique per VM ──────────────────────────
+resource "random_password" "jump_uks" {
+  length           = 20
+  special          = true
+  override_special = "!#$%&*()-_=+[]{}?"
+  min_upper        = 2
+  min_lower        = 2
+  min_numeric      = 2
+  min_special      = 2
+}
+
 # ── Key Vault — platform secrets ──────────────────────────────
 resource "azurerm_key_vault" "platform" {
   name                       = "kv-rs-plt-uks-p-001"
@@ -33,10 +44,10 @@ resource "azurerm_role_assignment" "kv_admin" {
   principal_id         = data.azurerm_client_config.current.object_id
 }
 
-# Store break-glass local admin password
+# Store generated password in Key Vault
 resource "azurerm_key_vault_secret" "vm_password" {
   name         = "rspltjmpp01-admin-password"
-  value        = var.vm_admin_password
+  value        = random_password.jump_uks.result
   key_vault_id = azurerm_key_vault.platform.id
 
   depends_on = [azurerm_role_assignment.kv_admin]
@@ -64,7 +75,7 @@ resource "azurerm_windows_virtual_machine" "jump_uks" {
   resource_group_name   = module.hub_uks.resource_group_name
   size                  = "Standard_B2s"
   admin_username        = "localadm"
-  admin_password        = var.vm_admin_password
+  admin_password        = random_password.jump_uks.result
   network_interface_ids = [azurerm_network_interface.jump_uks.id]
 
   identity {
