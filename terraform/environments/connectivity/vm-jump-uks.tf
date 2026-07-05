@@ -38,17 +38,16 @@ resource "azurerm_key_vault" "platform" {
 }
 
 # RBAC — pipeline SP can manage secrets
-resource "azurerm_role_assignment" "kv_admin_sp" {
+# Only ONE role assignment — the pipeline SP
+# Your user gets access manually when needed via portal
+resource "azurerm_role_assignment" "kv_admin" {
   scope                = azurerm_key_vault.platform.id
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = var.pipeline_sp_object_id
-}
 
-# RBAC — your user can manage secrets locally
-resource "azurerm_role_assignment" "kv_admin_user" {
-  scope                = azurerm_key_vault.platform.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = data.azurerm_client_config.current.object_id
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 # Store generated password in Key Vault
@@ -57,10 +56,7 @@ resource "azurerm_key_vault_secret" "vm_password" {
   value        = random_password.jump_uks.result
   key_vault_id = azurerm_key_vault.platform.id
 
-  depends_on = [
-    azurerm_role_assignment.kv_admin_sp,
-    azurerm_role_assignment.kv_admin_user
-  ]
+  depends_on = [azurerm_role_assignment.kv_admin]
 }
 
 # ── Network Interface ─────────────────────────────────────────
@@ -83,7 +79,7 @@ resource "azurerm_windows_virtual_machine" "jump_uks" {
   name                  = "rspltjmpp01"
   location              = "uksouth"
   resource_group_name   = module.hub_uks.resource_group_name
-  size                  = "Standard_B2ms"
+  size 					= "Standard_D2lds_v6"
   admin_username        = "localadm"
   admin_password        = random_password.jump_uks.result
   network_interface_ids = [azurerm_network_interface.jump_uks.id]
