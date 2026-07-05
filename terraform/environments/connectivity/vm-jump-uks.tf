@@ -83,7 +83,7 @@ resource "azurerm_windows_virtual_machine" "jump_uks" {
   name                  = "rspltjmpp01"
   location              = "uksouth"
   resource_group_name   = module.hub_uks.resource_group_name
-  size                  = "Standard_B2s"
+  size                  = "Standard_B2ms"
   admin_username        = "localadm"
   admin_password        = random_password.jump_uks.result
   network_interface_ids = [azurerm_network_interface.jump_uks.id]
