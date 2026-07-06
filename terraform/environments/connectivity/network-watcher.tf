@@ -52,6 +52,8 @@ resource "azurerm_network_watcher_flow_log" "vnet_uks" {
 }
 
 # ── VNet Flow Logs v2 — UK West ───────────────────────────────
+# No Traffic Analytics — Log Analytics workspace is in UK South
+# Storage account must be in same region as Network Watcher
 
 resource "azurerm_network_watcher_flow_log" "vnet_ukw" {
   name                 = "fl-rs-vnet-ukw-p-001"
@@ -65,14 +67,6 @@ resource "azurerm_network_watcher_flow_log" "vnet_ukw" {
   retention_policy {
     enabled = true
     days    = 7
-  }
-
-  traffic_analytics {
-    enabled               = true
-    workspace_id          = data.azurerm_log_analytics_workspace.central.workspace_id
-    workspace_region      = "uksouth"
-    workspace_resource_id = data.azurerm_log_analytics_workspace.central.id
-    interval_in_minutes   = 10
   }
 
   tags = var.tags
@@ -210,12 +204,13 @@ resource "azurerm_network_connection_monitor" "vm_to_internet" {
     enabled                  = true
   }
 
-  tags = var.tags
+  tags       = var.tags
   depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
 
 # ── Connection Monitor — Hub UKS to Hub UKW ──────────────────
 # Tests: is VNet peering working between regions?
+# Uses ICMP to test connectivity to UK West management subnet
 # Alerts if cross-region path breaks
 
 resource "azurerm_network_connection_monitor" "hub_uks_to_ukw" {
@@ -229,36 +224,36 @@ resource "azurerm_network_connection_monitor" "hub_uks_to_ukw" {
   }
 
   endpoint {
-    name    = "dest-hub-ukw-gateway"
-    address = "10.204.0.1"
+    name    = "dest-hub-ukw-mgmt"
+    address = "10.204.15.1"
   }
 
   test_configuration {
-    name                      = "tcp-peering"
-    protocol                  = "Tcp"
+    name                      = "icmp-peering"
+    protocol                  = "Icmp"
     test_frequency_in_seconds = 60
 
-    tcp_configuration {
-      port                = 443
+    icmp_configuration {
       trace_route_enabled = true
     }
   }
 
   test_group {
     name                     = "tg-peering"
-    destination_endpoints    = ["dest-hub-ukw-gateway"]
+    destination_endpoints    = ["dest-hub-ukw-mgmt"]
     source_endpoints         = ["source-rspltjmpp01"]
-    test_configuration_names = ["tcp-peering"]
+    test_configuration_names = ["icmp-peering"]
     enabled                  = true
   }
 
-  tags = var.tags
+  tags       = var.tags
   depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
 
 # ── Connection Monitor — VM to Log Analytics ──────────────────
 # Tests: can VM reach Log Analytics endpoint?
 # If this fails — monitoring pipeline is broken
+# Meta-monitoring: monitoring your monitoring
 
 resource "azurerm_network_connection_monitor" "vm_to_law" {
   name               = "cm-rs-vm-law-uks-p-001"
@@ -294,6 +289,6 @@ resource "azurerm_network_connection_monitor" "vm_to_law" {
     enabled                  = true
   }
 
-  tags = var.tags
+  tags       = var.tags
   depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
