@@ -58,7 +58,7 @@ resource "azurerm_network_watcher_flow_log" "vnet_ukw" {
   network_watcher_name = data.azurerm_network_watcher.ukw.name
   resource_group_name  = "NetworkWatcherRG"
   target_resource_id   = module.hub_ukw.vnet_id
-  storage_account_id   = azurerm_storage_account.diagnostics.id
+  storage_account_id   = azurerm_storage_account.diagnostics_ukw.id
   enabled              = true
   version              = 2
 
@@ -211,6 +211,7 @@ resource "azurerm_network_connection_monitor" "vm_to_internet" {
   }
 
   tags = var.tags
+  depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
 
 # ── Connection Monitor — Hub UKS to Hub UKW ──────────────────
@@ -252,6 +253,7 @@ resource "azurerm_network_connection_monitor" "hub_uks_to_ukw" {
   }
 
   tags = var.tags
+  depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
 
 # ── Connection Monitor — VM to Log Analytics ──────────────────
@@ -293,4 +295,5 @@ resource "azurerm_network_connection_monitor" "vm_to_law" {
   }
 
   tags = var.tags
+  depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
