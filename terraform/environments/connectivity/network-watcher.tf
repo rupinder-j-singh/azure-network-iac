@@ -52,7 +52,7 @@ resource "azurerm_network_watcher_flow_log" "vnet_uks" {
 }
 
 # ── VNet Flow Logs v2 — UK West ───────────────────────────────
-# No Traffic Analytics — Log Analytics workspace is in UK South
+# Traffic Analytics disabled — Log Analytics workspace in UK South
 # Storage account must be in same region as Network Watcher
 
 resource "azurerm_network_watcher_flow_log" "vnet_ukw" {
@@ -152,8 +152,9 @@ resource "azurerm_monitor_diagnostic_setting" "nic_uks" {
 }
 
 # ── Connection Monitor — VM to Internet ──────────────────────
-# Tests: can VM reach internet on TCP 443 and ICMP?
+# Tests: can VM reach internet on TCP 443?
 # Alerts if outbound connectivity lost
+# ICMP removed — Google blocks ICMP
 
 resource "azurerm_network_connection_monitor" "vm_to_internet" {
   name               = "cm-rs-vm-internet-uks-p-001"
@@ -163,11 +164,6 @@ resource "azurerm_network_connection_monitor" "vm_to_internet" {
   endpoint {
     name               = "source-rspltjmpp01"
     target_resource_id = azurerm_windows_virtual_machine.jump_uks.id
-  }
-
-  endpoint {
-    name    = "dest-google-dns"
-    address = "8.8.8.8"
   }
 
   endpoint {
@@ -186,71 +182,11 @@ resource "azurerm_network_connection_monitor" "vm_to_internet" {
     }
   }
 
-  test_configuration {
-    name                      = "icmp-ping"
-    protocol                  = "Icmp"
-    test_frequency_in_seconds = 60
-
-    icmp_configuration {
-      trace_route_enabled = true
-    }
-  }
-
   test_group {
     name                     = "tg-internet-tcp"
-    destination_endpoints    = ["dest-google-dns", "dest-microsoft"]
+    destination_endpoints    = ["dest-microsoft"]
     source_endpoints         = ["source-rspltjmpp01"]
     test_configuration_names = ["tcp-443"]
-    enabled                  = true
-  }
-
-  test_group {
-    name                     = "tg-internet-icmp"
-    destination_endpoints    = ["dest-google-dns"]
-    source_endpoints         = ["source-rspltjmpp01"]
-    test_configuration_names = ["icmp-ping"]
-    enabled                  = true
-  }
-
-  tags       = var.tags
-  depends_on = [azurerm_virtual_machine_extension.network_watcher]
-}
-
-# ── Connection Monitor — Hub UKS to Hub UKW ──────────────────
-# Tests: is VNet peering working between regions?
-# Uses ICMP to test connectivity to UK West management subnet
-# Alerts if cross-region path breaks
-
-resource "azurerm_network_connection_monitor" "hub_uks_to_ukw" {
-  name               = "cm-rs-hub-uks-to-ukw-p-001"
-  network_watcher_id = data.azurerm_network_watcher.uks.id
-  location           = "uksouth"
-
-  endpoint {
-    name               = "source-rspltjmpp01"
-    target_resource_id = azurerm_windows_virtual_machine.jump_uks.id
-  }
-
-  endpoint {
-    name    = "dest-hub-ukw-mgmt"
-    address = "10.204.15.1"
-  }
-
-  test_configuration {
-    name                      = "icmp-peering"
-    protocol                  = "Icmp"
-    test_frequency_in_seconds = 60
-
-    icmp_configuration {
-      trace_route_enabled = true
-    }
-  }
-
-  test_group {
-    name                     = "tg-peering"
-    destination_endpoints    = ["dest-hub-ukw-mgmt"]
-    source_endpoints         = ["source-rspltjmpp01"]
-    test_configuration_names = ["icmp-peering"]
     enabled                  = true
   }
 
@@ -300,3 +236,11 @@ resource "azurerm_network_connection_monitor" "vm_to_law" {
   tags       = var.tags
   depends_on = [azurerm_virtual_machine_extension.network_watcher]
 }
+
+# ── Connection Monitor — Hub UKS to Hub UKW ──────────────────
+# Commented out — no VM in UK West to test against
+# Add back when ASR failover deploys VM in UK West
+#
+# resource "azurerm_network_connection_monitor" "hub_uks_to_ukw" {
+# ...
+# }
