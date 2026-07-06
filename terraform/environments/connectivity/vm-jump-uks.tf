@@ -134,8 +134,11 @@ resource "azurerm_role_assignment" "vm_admin_login" {
   scope                = azurerm_windows_virtual_machine.jump_uks.id
   role_definition_name = "Virtual Machine Administrator Login"
   principal_id         = data.azurerm_client_config.current.object_id
-}
 
+  lifecycle {
+    ignore_changes = [principal_id]
+  }
+}
 # ── Auto shutdown at 23:00 ────────────────────────────────────
 resource "azurerm_dev_test_global_vm_shutdown_schedule" "jump_uks" {
   virtual_machine_id    = azurerm_windows_virtual_machine.jump_uks.id
@@ -185,6 +188,18 @@ resource "azurerm_virtual_machine_extension" "tailscale" {
   protected_settings = jsonencode({
     commandToExecute = "powershell -ExecutionPolicy Unrestricted -Command \"[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://pkgs.tailscale.com/stable/tailscale-setup-latest-amd64.msi' -OutFile 'C:\\tailscale.msi'; Start-Process msiexec.exe -ArgumentList '/i C:\\tailscale.msi /quiet /norestart' -Wait\""
   })
+
+  depends_on = [azurerm_virtual_machine_extension.aad_login]
+
+  tags = var.tags
+}
+resource "azurerm_virtual_machine_extension" "network_watcher" {
+  name                       = "AzureNetworkWatcherExtension"
+  virtual_machine_id         = azurerm_windows_virtual_machine.jump_uks.id
+  publisher                  = "Microsoft.Azure.NetworkWatcher"
+  type                       = "NetworkWatcherAgentWindows"
+  type_handler_version       = "1.4"
+  auto_upgrade_minor_version = true
 
   depends_on = [azurerm_virtual_machine_extension.aad_login]
 
