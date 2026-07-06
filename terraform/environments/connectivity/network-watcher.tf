@@ -69,6 +69,14 @@ resource "azurerm_network_watcher_flow_log" "vnet_ukw" {
     days    = 7
   }
 
+  traffic_analytics {
+    enabled               = false
+    workspace_id          = data.azurerm_log_analytics_workspace.central.workspace_id
+    workspace_region      = "uksouth"
+    workspace_resource_id = data.azurerm_log_analytics_workspace.central.id
+    interval_in_minutes   = 60
+  }
+
   tags = var.tags
 }
 
